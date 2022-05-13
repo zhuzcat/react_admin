@@ -1,16 +1,15 @@
-import {useRef,useEffect} from "react";
+import {useRef, useEffect} from "react";
 import {Form, Input, Button, Checkbox, message} from "antd";
 import {UserOutlined, LockOutlined} from '@ant-design/icons';
-import {useNavigate, Navigate} from "react-router-dom";
-import {userLogin} from "@/api";
-import storageUtils from "@/utils/storageUtils";
+import { Navigate} from "react-router-dom";
+import {useDispatch, useSelector} from "react-redux";
+import {loginAction} from "@/redux/user/userSlice";
 import './login.less'
 
 export default function Login() {
+    const dispatch = useDispatch();
+    const user = useSelector(state => state.user.user);
     const passwordRef = useRef(null);
-    // 编程式导航的hooks
-    const navigate = useNavigate();
-
     // 表单
     const [form] = Form.useForm();
 
@@ -33,28 +32,17 @@ export default function Login() {
     ];
 
     // 表单提交事件
-    async function submitLogin() {
-        const username = form.getFieldValue('username');
-        const password = form.getFieldValue('password');
-        try {
-            const res = await userLogin({username, password});
-            if (res.status === 0) {
-                message.success('登录成功');
-                storageUtils.setUser(res.data);
-                navigate('/', {replace: true});
-            } else {
-                message.error(res.msg);
-                form.setFieldsValue({password: ''})
-                passwordRef.current.focus();
-            }
-        } catch (e) {
-            console.log(e);
-        }
+    function submitLogin() {
+        dispatch(loginAction(form.getFieldsValue()));
     }
 
     // 判断是否已经登录
-    if (storageUtils.getUser() && storageUtils.getUser()._id) {
+    if (user && user._id) {
         return <Navigate to='/' replace={true}/>
+    }
+    // 判断是否登录失败
+    if(user.errorMsg){
+        message.error(user.errorMsg);
     }
 
     return (

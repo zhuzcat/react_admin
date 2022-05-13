@@ -2,14 +2,17 @@ import {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {Modal} from "antd";
 import {ExclamationCircleOutlined} from '@ant-design/icons';
-import storageUtils from "@/utils/storageUtils";
+import {useSelector, useDispatch} from "react-redux";
 import dateUtils from "@/utils/dateUtils";
 import {getUserAddress, getWeather} from "@/api";
+import {logoutAction} from '@/redux/user/userSlice'
 import './index.less'
 
 const {confirm} = Modal;
 
 export default function Header() {
+    const dispatch = useDispatch();
+    const user = useSelector(state => state.user.user);
     // 存储用户信息
     const [userInfo, setUserInfo] = useState({});
     const [date, setDate] = useState(dateUtils());
@@ -50,8 +53,7 @@ export default function Header() {
             okText: '确定',
             cancelText: '取消',
             onOk() {
-                storageUtils.removeUser();
-                navigate('/login', {replace: true})
+                dispatch(logoutAction());
             },
             onCancel() {
             },
@@ -67,7 +69,7 @@ export default function Header() {
                 <span style={{color: '#ccc'}}>{date}</span>
             </div>
             <div className='header-right'>
-                <span>你好 ,{storageUtils.getUser().username} </span>
+                <span>你好 ,{user.username} </span>
                 <a onClick={logout}>退出</a>
             </div>
         </div>

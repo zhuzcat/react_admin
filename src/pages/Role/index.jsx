@@ -4,7 +4,8 @@ import {useNavigate} from "react-router-dom";
 import AddRole from "./AddRole";
 import SetAuth from "./SetAuth";
 import {reqAddRole, reqRoleList, reqUpdateRole} from "@/api";
-import storageUtils from "@/utils/storageUtils";
+import {useSelector, useDispatch} from "react-redux";
+import {logoutAction} from "@/redux/user/userSlice";
 
 const columns = [
     {
@@ -44,7 +45,8 @@ export default function Role() {
     const [role, setRole] = useState({})
     const [addVisible, setAddVisible] = useState(false);
     const [authVisible, setAuthVisible] = useState(false);
-    // 获取添加角色的弹窗的ref
+    const user = useSelector(state => state.user.user)
+    const dispatch = useDispatch()
     const addRef = useRef()
     // 获取授权的弹窗的ref
     const authRef = useRef()
@@ -90,13 +92,12 @@ export default function Role() {
     const setAuth = async () => {
         role.menus = authRef.current.getCheckedKeys()
         role.auth_time = Date.now()
-        role.auth_name = storageUtils.getUser().username
+        role.auth_name = user.username
         const result = await reqUpdateRole(role)
         if (result.status === 0) {
-            if (role._id === storageUtils.getUser().role._id) {
-                storageUtils.removeUser()
+            if (role._id === user.role._id) {
+                dispatch(logoutAction())
                 message.info('用户所属角色权限被修改，请重新登录')
-                navigate('/login')
             } else {
                 message.success('设置权限成功')
                 getRoles().catch(err => message.error(err))

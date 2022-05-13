@@ -30,7 +30,6 @@ function App() {
             document.title = '添加/修改商品'
         }
     }, [location])
-    console.log(routes)
     const element = useRoutes(routes);
     return (
         <Fragment>

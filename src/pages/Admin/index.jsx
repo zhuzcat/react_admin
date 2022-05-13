@@ -1,19 +1,17 @@
-import {Navigate, Outlet, Routes, useLocation, useNavigate} from 'react-router-dom';
+import {Navigate, Outlet, useLocation} from 'react-router-dom';
 import {useState} from "react";
 import {Layout, Menu, message} from 'antd';
-import storageUtils from "../../utils/storageUtils";
 import AdminHeader from '@/components/Header';
 import LeftNav from "@/components/LeftNav";
+import {useSelector} from "react-redux";
 import './index.less'
 
 const {Header, Content, Footer, Sider} = Layout;
 
 export default function Admin() {
     const location = useLocation();
-    const navigate = useNavigate();
+    const user = useSelector(state => state.user.user);
     const [marginLeft, setMarginLeft] = useState(200);
-    // 查看是否拥有用户信息
-    const user = storageUtils.getUser();
 
     // 判断是否登录
     if (!user || !user._id) {
@@ -21,7 +19,7 @@ export default function Admin() {
     }
     // 判断是否有权限
     const {menus} = user.role;
-    if (menus.indexOf(location.pathname) === -1&&location.pathname!=='/') {
+    if (menus.indexOf(location.pathname) === -1 && location.pathname !== '/' && user.username !== 'admin') {
         message.info('您没有权限访问')
         return <Navigate to='/' replace={true}/>
     }
