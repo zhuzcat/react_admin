@@ -1,40 +1,60 @@
-import {useState} from "react";
-import {Form, Input, Button, Checkbox} from "antd";
+import {useRef,useEffect} from "react";
+import {Form, Input, Button, Checkbox, message} from "antd";
 import {UserOutlined, LockOutlined} from '@ant-design/icons';
+import {useNavigate, Navigate} from "react-router-dom";
+import {userLogin} from "@/api";
+import storageUtils from "@/utils/storageUtils";
 import './login.less'
 
-// 表单验证
-function validateLoginForm(values) {
-    if (values.length < 6 || values.length > 18) {
-        return {
-            validateStatus: 'error',
-            errorMsg: '输入长度为6-18位'
-        }
-    }
-    return {
-        validateStatus: 'success',
-        errorMsg: null,
-    }
-}
-
 export default function Login() {
-    const [username, setUsername] = useState({value: ''});
-    const [password, setPassword] = useState({value: ''});
+    const passwordRef = useRef(null);
+    // 编程式导航的hooks
+    const navigate = useNavigate();
 
-    // 输入框变化事件
-    function handleChange({target: {value}}, type) {
-        type === 'username' ? setUsername({
-            ...validateLoginForm(value),
-            value
-        }) : setPassword({...validateLoginForm(value), value})
-    }
+    // 表单
+    const [form] = Form.useForm();
+
+    // 表单验证规则
+    const rules = [
+        {
+            required: true,
+            whitespace: true,
+            message: '请输入用户名',
+        },
+        {
+            min: 4,
+            max: 18,
+            message: '输入长度为4-18位',
+        },
+        {
+            pattern: /^[a-zA-Z0-9_]+$/,
+            message: '用户名只能包含字母、数字和下划线',
+        },
+    ];
 
     // 表单提交事件
-    function submitLogin() {
-        if(username.validateStatus === 'error' || password.validateStatus === 'error') {
-            return
+    async function submitLogin() {
+        const username = form.getFieldValue('username');
+        const password = form.getFieldValue('password');
+        try {
+            const res = await userLogin({username, password});
+            if (res.status === 0) {
+                message.success('登录成功');
+                storageUtils.setUser(res.data);
+                navigate('/', {replace: true});
+            } else {
+                message.error(res.msg);
+                form.setFieldsValue({password: ''})
+                passwordRef.current.focus();
+            }
+        } catch (e) {
+            console.log(e);
         }
-        console.log(username.value, password.value)
+    }
+
+    // 判断是否已经登录
+    if (storageUtils.getUser() && storageUtils.getUser()._id) {
+        return <Navigate to='/' replace={true}/>
     }
 
     return (
@@ -45,6 +65,7 @@ export default function Login() {
             </header>
             <section className="login-section">
                 <Form
+                    form={form}
                     name="basic"
                     initialValues={{
                         remember: true,
@@ -54,36 +75,16 @@ export default function Login() {
                 >
                     <Form.Item
                         name="username"
-                        rules={[
-                            {
-                                required: true,
-                                message: '请输入用户名!',
-                            },
-                        ]}
-                        validateStatus={username.validateStatus}
-                        help={username.errorMsg}
+                        rules={rules}
                     >
-                        <Input prefix={<UserOutlined/>} size="large" placeholder="用户名" value={username.value}
-                               onChange={(value) => {
-                                   handleChange(value, 'username')
-                               }}/>
+                        <Input prefix={<UserOutlined/>} size="large" placeholder="用户名"/>
                     </Form.Item>
 
                     <Form.Item
                         name="password"
-                        rules={[
-                            {
-                                required: true,
-                                message: '请输入密码',
-                            },
-                        ]}
-                        validateStatus={password.validateStatus}
-                        help={password.errorMsg}
+                        rules={rules}
                     >
-                        <Input.Password prefix={<LockOutlined/>} size="large" placeholder="密码" value={password.value}
-                                        onChange={(value) => {
-                                            handleChange(value, 'password')
-                                        }}/>
+                        <Input.Password prefix={<LockOutlined/>} size="large" placeholder="密码" ref={passwordRef}/>
                     </Form.Item>
 
                     <Form.Item
