@@ -1,45 +1,42 @@
-import { useState } from 'react'
-import logo from './logo.svg'
-import './App.css'
+import {useRoutes, useLocation} from 'react-router-dom';
+import {Fragment, useEffect} from "react";
+import menuItem from '@/config/menuConfig'
+import routes from '@/router'
 
 function App() {
-  const [count, setCount] = useState(0)
+    const location = useLocation();
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Hello Vite + React!</p>
-        <p>
-          <button type="button" onClick={() => setCount((count) => count + 1)}>
-            count is: {count}
-          </button>
-        </p>
-        <p>
-          Edit <code>App.jsx</code> and save to test HMR updates.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {' | '}
-          <a
-            className="App-link"
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-        </p>
-      </header>
-    </div>
-  )
+    // 设置标题
+    function getTitle() {
+        let title = ''
+        menuItem.forEach(item => {
+            if (item.key === location.pathname) {
+                title = item.label
+            } else if (item.children) {
+                const cItem = item.children.find(child => child.key === location.pathname)
+                if (cItem) {
+                    title = cItem.label
+                }
+            }
+        })
+        return title
+    }
+    useEffect(() => {
+        document.title = getTitle()
+        if (location.pathname === '/product/detail') {
+            document.title = '商品详情'
+        }
+        if (location.pathname === '/product/addorupdate') {
+            document.title = '添加/修改商品'
+        }
+    }, [location])
+    console.log(routes)
+    const element = useRoutes(routes);
+    return (
+        <Fragment>
+            {element}
+        </Fragment>
+    )
 }
 
 export default App
